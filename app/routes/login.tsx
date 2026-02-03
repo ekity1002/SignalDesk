@@ -8,6 +8,18 @@ const LoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+function getSafeRedirectUrl(redirectTo: string | null): string {
+  if (!redirectTo) {
+    return "/";
+  }
+  // Only allow relative paths starting with /
+  // Reject absolute URLs, protocol-relative URLs (//), and other schemes
+  if (redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+    return redirectTo;
+  }
+  return "/";
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
 
@@ -32,7 +44,7 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const url = new URL(request.url);
-  const redirectTo = url.searchParams.get("redirectTo") || "/";
+  const redirectTo = getSafeRedirectUrl(url.searchParams.get("redirectTo"));
 
   const result = LoginSchema.safeParse({
     password: formData.get("password"),
