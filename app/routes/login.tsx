@@ -54,7 +54,10 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
 
   const url = new URL(request.url);
-  const redirectTo = getSafeRedirectUrl(url.searchParams.get("redirectTo"));
+  const redirectToParam = url.searchParams.get("redirectTo");
+  const redirectTo = getSafeRedirectUrl(redirectToParam);
+
+  const loginUrl = redirectToParam ? `/login?redirectTo=${encodeURIComponent(redirectToParam)}` : "/login";
 
   const result = loginSchema.safeParse({
     password: formData.get("password"),
@@ -62,7 +65,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (!result.success) {
     session.flash("error", result.error.issues[0].message);
-    return redirect("/login", {
+    return redirect(loginUrl, {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
@@ -73,7 +76,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (!isValid) {
     session.flash("error", "Invalid password");
-    return redirect("/login", {
+    return redirect(loginUrl, {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
