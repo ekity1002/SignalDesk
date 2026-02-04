@@ -1,14 +1,33 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Plus, Rss, Trash2 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Link,
+  Form as RouterForm,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "react-router";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { getSession } from "~/lib/auth/session.server";
+import { type CreateSourceFormData, createSourceSchema } from "~/lib/rss/schemas";
 import { createSource, deleteSource, getSources } from "~/lib/rss/sources.server";
 import type { Route } from "./+types/sources";
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_args: Route.MetaArgs) {
   return [{ title: "RSS Sources - SignalDesk" }];
 }
 
@@ -32,15 +51,23 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   if (intent === "create") {
-    const name = formData.get("name");
-    const url = formData.get("url");
+    const rawData = {
+      name: formData.get("name"),
+      url: formData.get("url"),
+    };
 
-    if (typeof name !== "string" || typeof url !== "string" || !name || !url) {
-      return { success: false, error: "Name and URL are required" };
+    const result = createSourceSchema.safeParse(rawData);
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.issues[0].message,
+        fieldErrors: result.error.flatten().fieldErrors,
+      };
     }
 
     try {
-      await createSource({ name, url });
+      await createSource(result.data);
     } catch (error) {
       return {
         success: false,
@@ -73,14 +100,26 @@ export default function SourcesPage() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
-  const formRef = useRef<HTMLFormElement>(null);
+  const submit = useSubmit();
+
+  const form = useForm<CreateSourceFormData>({
+    resolver: zodResolver(createSourceSchema),
+    defaultValues: {
+      name: "",
+      url: "",
+    },
+  });
 
   // Reset form after successful submission
   useEffect(() => {
     if (navigation.state === "idle" && actionData?.success) {
-      formRef.current?.reset();
+      form.reset();
     }
-  }, [navigation.state, actionData]);
+  }, [navigation.state, actionData, form]);
+
+  const onSubmit = (data: CreateSourceFormData) => {
+    submit({ ...data, intent: "create" }, { method: "post" });
+  };
 
   return (
     <div className="p-8">
@@ -105,43 +144,50 @@ export default function SourcesPage() {
           ADD NEW SOURCE
         </h2>
         <Card className="border-sidebar-border bg-card p-4">
-          <Form ref={formRef} method="post" className="flex items-end gap-4">
-            <input type="hidden" name="intent" value="create" />
-            <div className="flex-1">
-              <label htmlFor="name" className="mb-2 block text-sm text-muted-foreground">
-                Source Name
-              </label>
-              <Input
-                id="name"
+          <Form {...form}>
+            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <input type="hidden" name="intent" value="create" />
+              <FormField
+                control={form.control}
                 name="name"
-                placeholder="e.g. Tech News"
-                required
-                className="bg-background"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel className="text-muted-foreground">Source Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Tech News" className="bg-background" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="flex-[2]">
-              <label htmlFor="url" className="mb-2 block text-sm text-muted-foreground">
-                RSS URL
-              </label>
-              <Input
-                id="url"
+              <FormField
+                control={form.control}
                 name="url"
-                type="url"
-                placeholder="https://example.com/feed"
-                required
-                className="bg-background"
+                render={({ field }) => (
+                  <FormItem className="flex-[2]">
+                    <FormLabel className="text-muted-foreground">RSS URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://example.com/feed"
+                        className="bg-background"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <Button
-              type="submit"
-              disabled={isSubmitting || sources.length >= 10}
-              className="bg-sidebar-accent hover:bg-sidebar-accent/90"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add
-            </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || sources.length >= 10}
+                className="bg-sidebar-accent hover:bg-sidebar-accent/90"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
+            </form>
           </Form>
-          {actionData?.error && (
+          {actionData?.error && !actionData?.success && (
             <p className="mt-2 text-sm text-destructive">{actionData.error}</p>
           )}
           {sources.length >= 10 && (
@@ -170,7 +216,7 @@ export default function SourcesPage() {
                   <h3 className="font-medium">{source.name}</h3>
                   <p className="text-sm text-muted-foreground">{source.url}</p>
                 </div>
-                <Form method="post">
+                <RouterForm method="post">
                   <input type="hidden" name="intent" value="delete" />
                   <input type="hidden" name="id" value={source.id} />
                   <Button
@@ -182,7 +228,7 @@ export default function SourcesPage() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                </Form>
+                </RouterForm>
               </Card>
             ))
           )}
