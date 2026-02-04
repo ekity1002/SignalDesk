@@ -39,6 +39,10 @@ function createRequest(url: string, formData: Record<string, string>): Request {
   });
 }
 
+function createActionArgs(request: Request) {
+  return { request, params: {}, context: {} } as Parameters<typeof action>[0];
+}
+
 describe("login action", () => {
   describe("redirectTo parameter preservation", () => {
     it("should preserve redirectTo on validation error", async () => {
@@ -46,7 +50,7 @@ describe("login action", () => {
         password: "",
       });
 
-      const response = await action({ request, params: {}, context: {} });
+      const response = await action(createActionArgs(request));
 
       expect(response.status).toBe(302);
       const location = response.headers.get("Location");
@@ -58,7 +62,7 @@ describe("login action", () => {
         password: "wrong-password",
       });
 
-      const response = await action({ request, params: {}, context: {} });
+      const response = await action(createActionArgs(request));
 
       expect(response.status).toBe(302);
       const location = response.headers.get("Location");
@@ -70,7 +74,7 @@ describe("login action", () => {
         password: "correct-password",
       });
 
-      const response = await action({ request, params: {}, context: {} });
+      const response = await action(createActionArgs(request));
 
       expect(response.status).toBe(302);
       const location = response.headers.get("Location");
@@ -82,7 +86,7 @@ describe("login action", () => {
         password: "correct-password",
       });
 
-      const response = await action({ request, params: {}, context: {} });
+      const response = await action(createActionArgs(request));
 
       expect(response.status).toBe(302);
       const location = response.headers.get("Location");
@@ -94,7 +98,7 @@ describe("login action", () => {
         password: "",
       });
 
-      const response = await action({ request, params: {}, context: {} });
+      const response = await action(createActionArgs(request));
 
       expect(response.status).toBe(302);
       const location = response.headers.get("Location");

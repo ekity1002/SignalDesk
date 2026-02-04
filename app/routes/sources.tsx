@@ -145,7 +145,8 @@ export default function SourcesPage() {
         </h2>
         <Card className="border-sidebar-border bg-card p-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <input type="hidden" name="intent" value="create" />
               <FormField
                 control={form.control}
                 name="name"
