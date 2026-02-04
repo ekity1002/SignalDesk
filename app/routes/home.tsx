@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Welcome } from "../welcome/welcome";
 import type { Route } from "./+types/home";
+import { Button } from "~/components/ui/button";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,17 +12,12 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div>
-      <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-          SignalDesk
-        </h1>
-        <Link
-          to="/logout"
-          className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-        >
-          Sign out
-        </Link>
+    <div className="min-h-screen bg-background">
+      <header className="flex items-center justify-between border-b border-border p-4">
+        <h1 className="text-xl font-bold text-foreground">SignalDesk</h1>
+        <Button variant="ghost" asChild>
+          <Link to="/logout">Sign out</Link>
+        </Button>
       </header>
       <Welcome />
     </div>
