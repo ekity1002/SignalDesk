@@ -1,5 +1,12 @@
-import { EyeOff, LayoutGrid, Rss, Settings, Star, Tags } from "lucide-react";
+import { EyeOff, LayoutGrid, LogOut, Rss, Settings, Star, Tags } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { cn } from "~/lib/utils";
 
 type NavItem = {
@@ -117,12 +124,30 @@ export function Sidebar({ sourceCount = 0 }: SidebarProps) {
               <p className="text-xs text-sidebar-muted">Admin</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="rounded p-2 text-sidebar-muted hover:bg-sidebar-border hover:text-sidebar-foreground"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Settings"
+                className="rounded p-2 text-sidebar-muted hover:bg-sidebar-border hover:text-sidebar-foreground"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top">
+              <DropdownMenuItem disabled>
+                <Settings className="h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/logout" className="text-destructive">
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </aside>
