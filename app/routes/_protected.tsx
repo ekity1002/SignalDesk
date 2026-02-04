@@ -1,6 +1,8 @@
-import { Outlet, redirect } from "react-router";
-import type { Route } from "./+types/_protected";
+import { Outlet, redirect, useLoaderData } from "react-router";
+import { AppLayout } from "~/components/layout";
 import { getSession } from "~/lib/auth/session.server";
+import { getSourceCount } from "~/lib/rss/sources.server";
+import type { Route } from "./+types/_protected";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -12,9 +14,17 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw redirect(`/login?redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
-  return null;
+  const sourceCount = await getSourceCount();
+
+  return { sourceCount };
 }
 
 export default function ProtectedLayout() {
-  return <Outlet />;
+  const { sourceCount } = useLoaderData<typeof loader>();
+
+  return (
+    <AppLayout sourceCount={sourceCount}>
+      <Outlet />
+    </AppLayout>
+  );
 }

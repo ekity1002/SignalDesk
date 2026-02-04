@@ -10,7 +10,8 @@ app/
 │   └── auth/      # 認証関連
 ├── services/      # ビジネスロジック（将来拡張時）
 ├── components/    # 共有UIコンポーネント
-├── routes/        # React Routerのルート（ページ）
+├── routes/        # React Routerのルート│   └── api/       #  API関連
+（ページ）
 └── types/         # 型定義
 ```
 

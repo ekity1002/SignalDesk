@@ -24,6 +24,11 @@
   --color-border: hsl(0 0% 89.8%);
   --color-input: hsl(0 0% 89.8%);
   --color-ring: hsl(0 0% 3.9%);
+  --color-sidebar: hsl(222 47% 11%);
+  --color-sidebar-foreground: hsl(210 40% 96%);
+  --color-sidebar-muted: hsl(215 20% 45%);
+  --color-sidebar-accent: hsl(250 84% 64%);
+  --color-sidebar-border: hsl(217 33% 17%);
   --radius: 0.5rem;
 }
 
