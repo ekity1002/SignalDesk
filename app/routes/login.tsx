@@ -1,17 +1,22 @@
-import { data, Form, redirect } from "react-router";
-import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { data, redirect, useSubmit } from "react-router";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { validatePassword } from "~/lib/auth/auth.server";
+import { type LoginFormData, loginSchema } from "~/lib/auth/schemas";
 import { commitSession, getSession } from "~/lib/auth/session.server";
 import type { Route } from "./+types/login";
-
-const LoginSchema = z.object({
-  password: z.string().min(1, "Password is required"),
-});
 
 function getSafeRedirectUrl(redirectTo: string | null): string {
   if (!redirectTo) {
@@ -51,7 +56,7 @@ export async function action({ request }: Route.ActionArgs) {
   const url = new URL(request.url);
   const redirectTo = getSafeRedirectUrl(url.searchParams.get("redirectTo"));
 
-  const result = LoginSchema.safeParse({
+  const result = loginSchema.safeParse({
     password: formData.get("password"),
   });
 
@@ -91,6 +96,18 @@ export function meta() {
 
 export default function Login({ loaderData }: Route.ComponentProps) {
   const { error } = loaderData;
+  const submit = useSubmit();
+
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: LoginFormData) => {
+    submit(data, { method: "post" });
+  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
@@ -106,21 +123,26 @@ export default function Login({ loaderData }: Route.ComponentProps) {
             </Alert>
           )}
 
-          <Form method="post" className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
                 name="password"
-                type="password"
-                required
-                autoComplete="current-password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" autoComplete="current-password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
+              <Button type="submit" className="w-full">
+                Sign in
+              </Button>
+            </form>
           </Form>
         </CardContent>
       </Card>
