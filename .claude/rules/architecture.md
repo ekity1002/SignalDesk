@@ -1,5 +1,17 @@
 # Architecture
 
+## Framework and Library
+
+以下を使用する。
+
+* React Router v7
+* react hook form
+* zod
+* tailwind css
+* shadcn ui
+* vitest
+* biome
+
 ## Directory Structure
 
 シンプル構成（lib配下）を採用。MVPに適した軽量構成。
