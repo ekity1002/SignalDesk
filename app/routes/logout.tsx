@@ -1,14 +1,8 @@
-import { redirect, Form, Link } from "react-router";
-import type { Route } from "./+types/logout";
-import { getSession, destroySession } from "~/lib/auth/session.server";
+import { Form, Link, redirect } from "react-router";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { destroySession, getSession } from "~/lib/auth/session.server";
+import type { Route } from "./+types/logout";
 
 export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -30,9 +24,7 @@ export default function Logout() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Sign out</CardTitle>
-          <CardDescription>
-            Are you sure you want to sign out?
-          </CardDescription>
+          <CardDescription>Are you sure you want to sign out?</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">

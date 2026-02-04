@@ -15,15 +15,17 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
-export const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage<SessionData, SessionFlashData>({
-    cookie: {
-      name: "__signaldesk_session",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-      sameSite: "lax",
-      secrets: [process.env.SESSION_SECRET],
-      secure: isProduction,
-    },
-  });
+export const { getSession, commitSession, destroySession } = createCookieSessionStorage<
+  SessionData,
+  SessionFlashData
+>({
+  cookie: {
+    name: "__signaldesk_session",
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: "/",
+    sameSite: "lax",
+    secrets: [process.env.SESSION_SECRET],
+    secure: isProduction,
+  },
+});

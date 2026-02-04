@@ -1,19 +1,13 @@
-import { data, redirect, Form } from "react-router";
+import { data, Form, redirect } from "react-router";
 import { z } from "zod";
-import type { Route } from "./+types/login";
-import { getSession, commitSession } from "~/lib/auth/session.server";
-import { validatePassword } from "~/lib/auth/auth.server";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { validatePassword } from "~/lib/auth/auth.server";
+import { commitSession, getSession } from "~/lib/auth/session.server";
+import type { Route } from "./+types/login";
 
 const LoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
@@ -46,7 +40,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
-    }
+    },
   );
 }
 

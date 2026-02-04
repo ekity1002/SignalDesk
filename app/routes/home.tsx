@@ -1,7 +1,4 @@
-import { Link } from "react-router";
-import { Welcome } from "../welcome/welcome";
 import type { Route } from "./+types/home";
-import { Button } from "~/components/ui/button";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,14 +9,9 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="flex items-center justify-between border-b border-border p-4">
-        <h1 className="text-xl font-bold text-foreground">SignalDesk</h1>
-        <Button variant="ghost" asChild>
-          <Link to="/logout">Sign out</Link>
-        </Button>
-      </header>
-      <Welcome />
+    <div className="p-8">
+      <h1 className="text-2xl font-bold">Latest News</h1>
+      <p className="mt-2 text-muted-foreground">News articles will be displayed here.</p>
     </div>
   );
 }
