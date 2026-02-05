@@ -155,6 +155,52 @@ describe("Tags Server", () => {
       await expect(createTag(input)).rejects.toThrow("A tag with this name already exists");
     });
 
+    it("should rollback tag when keyword insert fails", async () => {
+      const input: CreateTagInput = {
+        name: "AI",
+        keywords: ["machine learning"],
+      };
+
+      const mockTag = {
+        id: "1",
+        name: "AI",
+        created_at: "2026-02-04T00:00:00Z",
+      };
+
+      // Mock for tag insert (success)
+      const mockTagInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: mockTag, error: null }),
+        }),
+      });
+
+      // Mock for keywords insert (failure)
+      const mockKeywordsInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: "Insert error" },
+        }),
+      });
+
+      // Mock for tag delete (rollback)
+      const mockTagDelete = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "tags") {
+          return { insert: mockTagInsert, delete: mockTagDelete } as never;
+        }
+        if (table === "tag_keywords") {
+          return { insert: mockKeywordsInsert } as never;
+        }
+        return {} as never;
+      });
+
+      await expect(createTag(input)).rejects.toThrow("Failed to create keywords");
+      expect(mockTagDelete).toHaveBeenCalled();
+    });
+
     it("should throw error when tag creation fails", async () => {
       const input: CreateTagInput = {
         name: "AI",
@@ -208,6 +254,11 @@ describe("Tags Server", () => {
         { id: "k2", tag_id: "1", keyword: "new keyword 2" },
       ];
 
+      // Mock for select (fetch old keywords)
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+
       // Mock for delete existing keywords
       const mockDelete = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: null }),
@@ -221,6 +272,7 @@ describe("Tags Server", () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "tag_keywords") {
           return {
+            select: mockSelect,
             delete: mockDelete,
             insert: mockInsert,
           } as never;
@@ -238,12 +290,20 @@ describe("Tags Server", () => {
       const tagId = "1";
       const keywords: string[] = [];
 
+      // Mock for select (fetch old keywords)
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+
       // Mock for delete existing keywords
       const mockDelete = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({ delete: mockDelete } as never);
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+        delete: mockDelete,
+      } as never);
 
       const result = await updateTagKeywords(tagId, keywords);
 
@@ -252,30 +312,62 @@ describe("Tags Server", () => {
     });
 
     it("should throw error when delete fails", async () => {
+      // Mock for select (fetch old keywords)
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+
       const mockDelete = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: { message: "Delete error" } }),
       });
 
-      vi.mocked(supabase.from).mockReturnValue({ delete: mockDelete } as never);
+      vi.mocked(supabase.from).mockReturnValue({
+        select: mockSelect,
+        delete: mockDelete,
+      } as never);
 
       await expect(updateTagKeywords("1", ["test"])).rejects.toThrow("Failed to update keywords");
     });
 
-    it("should throw error when insert fails", async () => {
+    it("should restore old keywords when insert fails", async () => {
+      const oldKeywords = [
+        { id: "k1", tag_id: "1", keyword: "old keyword 1" },
+        { id: "k2", tag_id: "1", keyword: "old keyword 2" },
+      ];
+
+      // Mock for select (fetch old keywords)
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: oldKeywords, error: null }),
+      });
+
+      // Mock for delete existing keywords
       const mockDelete = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: null }),
       });
 
-      const mockInsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: "Insert error" },
-        }),
+      // Track insert calls to distinguish between new keywords (fail) and restore (succeed)
+      let insertCallCount = 0;
+      const mockInsert = vi.fn().mockImplementation(() => {
+        insertCallCount++;
+        if (insertCallCount === 1) {
+          // First call: new keywords insert fails
+          return {
+            select: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: "Insert error" },
+            }),
+          };
+        }
+        // Second call: restore old keywords succeeds
+        return {
+          select: vi.fn().mockResolvedValue({ data: oldKeywords, error: null }),
+        };
       });
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "tag_keywords") {
           return {
+            select: mockSelect,
             delete: mockDelete,
             insert: mockInsert,
           } as never;
@@ -284,6 +376,8 @@ describe("Tags Server", () => {
       });
 
       await expect(updateTagKeywords("1", ["test"])).rejects.toThrow("Failed to update keywords");
+      // insert called twice: first for new keywords (fail), second for restore
+      expect(mockInsert).toHaveBeenCalledTimes(2);
     });
   });
 });

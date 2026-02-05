@@ -60,6 +60,7 @@ export async function createTag(input: CreateTagInput): Promise<Tag> {
     .select();
 
   if (keywordsError) {
+    await supabase.from("tags").delete().eq("id", tag.id);
     throw new Error("Failed to create keywords");
   }
 
@@ -75,6 +76,16 @@ export async function deleteTag(id: string): Promise<void> {
 }
 
 export async function updateTagKeywords(tagId: string, keywords: string[]): Promise<TagKeyword[]> {
+  // Fetch old keywords for rollback
+  const { data: oldKeywords, error: fetchError } = await supabase
+    .from("tag_keywords")
+    .select("*")
+    .eq("tag_id", tagId);
+
+  if (fetchError) {
+    throw new Error("Failed to update keywords");
+  }
+
   const { error: deleteError } = await supabase.from("tag_keywords").delete().eq("tag_id", tagId);
 
   if (deleteError) {
@@ -96,6 +107,14 @@ export async function updateTagKeywords(tagId: string, keywords: string[]): Prom
     .select();
 
   if (insertError) {
+    // Rollback: restore old keywords
+    if (oldKeywords && oldKeywords.length > 0) {
+      const restoreRows = oldKeywords.map((kw) => ({
+        tag_id: kw.tag_id,
+        keyword: kw.keyword,
+      }));
+      await supabase.from("tag_keywords").insert(restoreRows).select();
+    }
     throw new Error("Failed to update keywords");
   }
 
