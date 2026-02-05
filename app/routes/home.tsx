@@ -32,7 +32,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const url = new URL(request.url);
-  const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+  const parsedPage = Number(url.searchParams.get("page") ?? "1");
+  const page = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
   const search = url.searchParams.get("search") ?? undefined;
 
   const [articlesResult, tags] = await Promise.all([
