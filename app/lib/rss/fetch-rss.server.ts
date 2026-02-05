@@ -3,6 +3,7 @@ import {
   articleExistsByCanonicalUrl,
   attachTagsToArticle,
   createArticle,
+  deleteArticle,
 } from "~/lib/rss/articles.server";
 import { getSources, type Source } from "~/lib/rss/sources.server";
 import { matchTags, type TagWithKeywords } from "~/lib/rss/tag-matcher";
@@ -72,10 +73,15 @@ export async function fetchRssSource(
         });
 
         if (matchedTags.length > 0) {
-          await attachTagsToArticle(
-            article.id,
-            matchedTags.map((t) => t.id),
-          );
+          try {
+            await attachTagsToArticle(
+              article.id,
+              matchedTags.map((t) => t.id),
+            );
+          } catch (tagError) {
+            await deleteArticle(article.id);
+            throw tagError;
+          }
         }
 
         result.created++;

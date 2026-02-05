@@ -13,6 +13,7 @@ vi.mock("~/lib/rss/articles.server", () => ({
   articleExistsByCanonicalUrl: vi.fn(),
   createArticle: vi.fn(),
   attachTagsToArticle: vi.fn(),
+  deleteArticle: vi.fn(),
 }));
 
 vi.mock("~/lib/tags/tags.server", () => ({
@@ -31,6 +32,7 @@ import {
   articleExistsByCanonicalUrl,
   attachTagsToArticle,
   createArticle,
+  deleteArticle,
 } from "~/lib/rss/articles.server";
 import { fetchAllRssSources, fetchRssSource } from "~/lib/rss/fetch-rss.server";
 import type { Source } from "~/lib/rss/sources.server";
@@ -168,6 +170,30 @@ describe("fetchRssSource", () => {
 
     expect(createArticle).toHaveBeenCalledWith(expect.objectContaining({ status: "excluded" }));
     expect(attachTagsToArticle).not.toHaveBeenCalled();
+  });
+
+  it("should rollback article when tag attachment fails", async () => {
+    mockParseURL.mockResolvedValue({ items: [mockFeedItems[0]] });
+    vi.mocked(articleExistsByCanonicalUrl).mockResolvedValue(false);
+    vi.mocked(createArticle).mockResolvedValue({
+      id: "new-article-1",
+      title: "New Machine Learning Framework",
+      description: "A new framework for machine learning released",
+      link: "https://example.com/article1",
+      canonical_url: "https://example.com/article1",
+      published_at: "2026-02-01T10:00:00Z",
+      source_id: "source-1",
+      status: "visible",
+      created_at: "2026-02-01T00:00:00Z",
+      updated_at: "2026-02-01T00:00:00Z",
+    });
+    vi.mocked(attachTagsToArticle).mockRejectedValue(new Error("DB Error"));
+
+    const result = await fetchRssSource(mockSource, mockTags);
+
+    expect(deleteArticle).toHaveBeenCalledWith("new-article-1");
+    expect(result.created).toBe(0);
+    expect(result.errors).toHaveLength(1);
   });
 });
 
