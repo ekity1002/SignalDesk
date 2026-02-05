@@ -53,7 +53,10 @@ export async function getArticles(
     .eq("status", status ?? "visible");
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    const sanitized = search.replace(/[,()]/g, "");
+    if (sanitized.length > 0) {
+      query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
+    }
   }
 
   const { data, error, count } = await query
