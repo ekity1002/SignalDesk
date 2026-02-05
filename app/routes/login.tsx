@@ -57,7 +57,9 @@ export async function action({ request }: Route.ActionArgs) {
   const redirectToParam = url.searchParams.get("redirectTo");
   const redirectTo = getSafeRedirectUrl(redirectToParam);
 
-  const loginUrl = redirectToParam ? `/login?redirectTo=${encodeURIComponent(redirectToParam)}` : "/login";
+  const loginUrl = redirectToParam
+    ? `/login?redirectTo=${encodeURIComponent(redirectToParam)}`
+    : "/login";
 
   const result = loginSchema.safeParse({
     password: formData.get("password"),

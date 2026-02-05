@@ -3,7 +3,7 @@ declare namespace NodeJS {
     DATABASE_URL: string;
     SESSION_SECRET: string;
     AUTH_PASSWORD: string;
-    CRON_SECRET: string;
+    CRON_SECRET?: string;
     LLM_PROVIDER: "openai" | "anthropic";
     OPENAI_API_KEY?: string;
     ANTHROPIC_API_KEY?: string;

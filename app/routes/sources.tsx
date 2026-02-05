@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Plus, Rss, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Power, Rss, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
@@ -11,6 +11,7 @@ import {
   useNavigation,
   useSubmit,
 } from "react-router";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -24,7 +25,12 @@ import {
 import { Input } from "~/components/ui/input";
 import { getSession } from "~/lib/auth/session.server";
 import { type CreateSourceFormData, createSourceSchema } from "~/lib/rss/schemas";
-import { createSource, deleteSource, getSources } from "~/lib/rss/sources.server";
+import {
+  createSource,
+  deleteSource,
+  getSources,
+  toggleSourceActive,
+} from "~/lib/rss/sources.server";
 import type { Route } from "./+types/sources";
 
 export function meta(_args: Route.MetaArgs) {
@@ -92,6 +98,23 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
+  if (intent === "toggle") {
+    const id = formData.get("id");
+    const isActive = formData.get("isActive") === "true";
+    if (typeof id !== "string") {
+      return { success: false, error: "Invalid ID" };
+    }
+
+    try {
+      await toggleSourceActive(id, !isActive);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to toggle source",
+      };
+    }
+  }
+
   return { success: true };
 }
 
@@ -145,7 +168,11 @@ export default function SourcesPage() {
         </h2>
         <Card className="border-sidebar-border bg-card p-4">
           <Form {...form}>
-            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+            <form
+              method="post"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex items-end gap-4"
+            >
               <input type="hidden" name="intent" value="create" />
               <FormField
                 control={form.control}
@@ -212,23 +239,56 @@ export default function SourcesPage() {
                 key={source.id}
                 className="flex items-center justify-between border-sidebar-border bg-card p-4"
               >
-                <div>
-                  <h3 className="font-medium">{source.name}</h3>
-                  <p className="text-sm text-muted-foreground">{source.url}</p>
-                </div>
-                <RouterForm method="post">
-                  <input type="hidden" name="intent" value="delete" />
-                  <input type="hidden" name="id" value={source.id} />
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    disabled={isSubmitting}
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                <div className="flex items-center gap-3">
+                  <Badge
+                    variant={source.is_active ? "default" : "secondary"}
+                    className={
+                      source.is_active
+                        ? "bg-green-600 text-white hover:bg-green-600"
+                        : "bg-gray-400 text-white hover:bg-gray-400"
+                    }
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </RouterForm>
+                    {source.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                  <div>
+                    <h3 className="font-medium">{source.name}</h3>
+                    <p className="text-sm text-muted-foreground">{source.url}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <RouterForm method="post">
+                    <input type="hidden" name="intent" value="toggle" />
+                    <input type="hidden" name="id" value={source.id} />
+                    <input type="hidden" name="isActive" value={String(source.is_active)} />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isSubmitting}
+                      className={
+                        source.is_active
+                          ? "text-green-600 hover:bg-green-600/10 hover:text-green-600"
+                          : "text-muted-foreground hover:text-foreground"
+                      }
+                      title={source.is_active ? "Disable source" : "Enable source"}
+                    >
+                      <Power className="h-4 w-4" />
+                    </Button>
+                  </RouterForm>
+                  <RouterForm method="post">
+                    <input type="hidden" name="intent" value="delete" />
+                    <input type="hidden" name="id" value={source.id} />
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isSubmitting}
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </RouterForm>
+                </div>
               </Card>
             ))
           )}
