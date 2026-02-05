@@ -101,6 +101,21 @@ describe("Articles", () => {
       const result = await articleExistsByCanonicalUrl("https://example.com/nonexistent");
       expect(result).toBe(false);
     });
+
+    it("should throw error when query fails", async () => {
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: "DB Error" },
+      });
+      const mockLimit = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockEq = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
+
+      await expect(
+        articleExistsByCanonicalUrl("https://example.com/article"),
+      ).rejects.toThrow("Failed to check article existence");
+    });
   });
 
   describe("createArticle", () => {
@@ -282,6 +297,20 @@ describe("Articles", () => {
 
       const result = await toggleFavorite("article-1");
       expect(result.favorited).toBe(false);
+    });
+
+    it("should throw error when favorite status check fails", async () => {
+      const mockMaybeSingle = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: "DB Error" },
+      });
+      const mockEq = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
+
+      await expect(toggleFavorite("article-1")).rejects.toThrow(
+        "Failed to check favorite status",
+      );
     });
   });
 });

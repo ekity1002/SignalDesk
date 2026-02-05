@@ -68,12 +68,16 @@ export async function getArticles(
 }
 
 export async function articleExistsByCanonicalUrl(canonicalUrl: string): Promise<boolean> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("articles")
     .select("id")
     .eq("canonical_url", canonicalUrl)
     .limit(1)
     .maybeSingle();
+
+  if (error) {
+    throw new Error("Failed to check article existence");
+  }
 
   return data !== null;
 }
@@ -144,11 +148,15 @@ export async function deleteArticle(id: string): Promise<void> {
 }
 
 export async function toggleFavorite(articleId: string): Promise<{ favorited: boolean }> {
-  const { data: existing } = await supabase
+  const { data: existing, error: fetchError } = await supabase
     .from("favorites")
     .select("*")
     .eq("article_id", articleId)
     .maybeSingle();
+
+  if (fetchError) {
+    throw new Error("Failed to check favorite status");
+  }
 
   if (existing) {
     const { error } = await supabase.from("favorites").delete().eq("article_id", articleId);
