@@ -12,5 +12,6 @@ export default [
   layout("routes/_protected.tsx", [
     index("routes/home.tsx"),
     route("sources", "routes/sources.tsx"),
+    route("tags", "routes/tags.tsx"),
   ]),
 ] satisfies RouteConfig;
