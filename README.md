@@ -42,46 +42,78 @@ Create a production build:
 npm run build
 ```
 
-## Deployment
+## ローカル環境での cron API 実行手順（curl）
 
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+ローカルで開発サーバーを起動した状態で、`curl` を使って cron 用 API を直接叩くことができます。
 
 ---
 
-Built with ❤️ using React Router.
+### 手順
+
+#### 1. `.env` に `CRON_SECRET` を設定（未設定の場合）
+
+```env
+# .env に追加
+CRON_SECRET=local-test-secret
+```
+
+---
+
+#### 2. 開発サーバーを起動
+
+```bash
+npm run dev
+```
+
+---
+
+#### 3. 別ターミナルから `curl` で実行
+
+```bash
+curl -H "Authorization: Bearer local-test-secret" \
+  http://localhost:5173/api/cron/fetch-rss
+```
+
+---
+
+### レスポンス例
+
+```json
+{
+  "success": true,
+  "totalSources": 2,
+  "results": [
+    {
+      "sourceId": "...",
+      "sourceName": "Tech Blog",
+      "created": 5,
+      "skipped": 0,
+      "errors": []
+    }
+  ]
+}
+```
+
+---
+
+### エラー時の挙動
+
+- 認証に失敗した場合、以下が返ります：
+
+```json
+{ "error": "Unauthorized" }
+```
+
+- HTTP ステータスコード: **401**
+
+---
+
+### 注意事項
+
+- 実行前に **DB にアクティブな RSS ソースが登録されている必要**があります
+- **Supabase が起動していること**を確認してください
+
+```bash
+npm run db:start
+```
+
