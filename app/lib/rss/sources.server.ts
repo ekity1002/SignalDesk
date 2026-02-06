@@ -1,6 +1,20 @@
 import { supabase } from "~/lib/supabase.server";
 
-const MAX_SOURCES = 10;
+const DEFAULT_MAX_SOURCES = 10;
+
+export function getMaxSources(): number {
+  const envValue = process.env.MAX_RSS_SOURCES;
+  if (!envValue) {
+    return DEFAULT_MAX_SOURCES;
+  }
+
+  const parsed = Number(envValue);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return DEFAULT_MAX_SOURCES;
+  }
+
+  return parsed;
+}
 
 export type Source = {
   id: string;
@@ -42,9 +56,10 @@ export async function createSource(input: CreateSourceInput): Promise<Source> {
   }
 
   // Check source limit
+  const maxSources = getMaxSources();
   const count = await getSourceCount();
-  if (count >= MAX_SOURCES) {
-    throw new Error("Maximum sources limit (10) reached");
+  if (count >= maxSources) {
+    throw new Error(`Maximum sources limit (${maxSources}) reached`);
   }
 
   const { data, error } = await supabase

@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type CreateSourceInput,
   createSource,
   deleteSource,
+  getMaxSources,
   getSources,
   type Source,
   toggleSourceActive,
@@ -17,9 +18,57 @@ vi.mock("~/lib/supabase.server", () => ({
 
 import { supabase } from "~/lib/supabase.server";
 
+describe("getMaxSources", () => {
+  const originalEnv = process.env.MAX_RSS_SOURCES;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.MAX_RSS_SOURCES;
+    } else {
+      process.env.MAX_RSS_SOURCES = originalEnv;
+    }
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is not set", () => {
+    delete process.env.MAX_RSS_SOURCES;
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return the value from MAX_RSS_SOURCES when set", () => {
+    process.env.MAX_RSS_SOURCES = "20";
+    expect(getMaxSources()).toBe(20);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is empty string", () => {
+    process.env.MAX_RSS_SOURCES = "";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is not a valid number", () => {
+    process.env.MAX_RSS_SOURCES = "abc";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is negative", () => {
+    process.env.MAX_RSS_SOURCES = "-5";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is zero", () => {
+    process.env.MAX_RSS_SOURCES = "0";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is a decimal", () => {
+    process.env.MAX_RSS_SOURCES = "5.5";
+    expect(getMaxSources()).toBe(10);
+  });
+});
+
 describe("RSS Sources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.MAX_RSS_SOURCES;
   });
 
   describe("getSources", () => {
@@ -128,6 +177,26 @@ describe("RSS Sources", () => {
       };
 
       await expect(createSource(input)).rejects.toThrow("Maximum sources limit (10) reached");
+    });
+
+    it("should use custom limit from MAX_RSS_SOURCES environment variable", async () => {
+      process.env.MAX_RSS_SOURCES = "5";
+
+      // Mock count check - 5 sources already exist
+      const mockSelect = vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({
+          data: Array(5).fill({ id: "x" }),
+          error: null,
+        }),
+      });
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
+
+      const input: CreateSourceInput = {
+        name: "Test",
+        url: "https://example.com/feed",
+      };
+
+      await expect(createSource(input)).rejects.toThrow("Maximum sources limit (5) reached");
     });
 
     it("should throw error when URL already exists", async () => {
