@@ -1,5 +1,7 @@
 import { supabase } from "~/lib/supabase.server";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type Article = {
   id: string;
   title: string;
@@ -64,10 +66,15 @@ export async function getArticles(
   }
 
   if (tagIds && tagIds.length > 0) {
+    const validTagIds = tagIds.filter((id) => UUID_REGEX.test(id));
+    if (validTagIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+
     const { data: taggedArticles, error: tagError } = await supabase
       .from("article_tags")
       .select("article_id")
-      .in("tag_id", tagIds);
+      .in("tag_id", validTagIds);
 
     if (tagError) {
       throw new Error("Failed to fetch tagged articles");

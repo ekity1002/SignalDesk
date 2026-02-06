@@ -116,10 +116,12 @@ describe("Articles", () => {
         return { select: mockSelect } as never;
       });
 
-      await getArticles({ page: 1, limit: 50, tagIds: ["tag-1", "tag-2"] });
+      const tagId1 = "550e8400-e29b-41d4-a716-446655440001";
+      const tagId2 = "550e8400-e29b-41d4-a716-446655440002";
+      await getArticles({ page: 1, limit: 50, tagIds: [tagId1, tagId2] });
 
       expect(supabase.from).toHaveBeenCalledWith("article_tags");
-      expect(mockArticleTagsIn).toHaveBeenCalledWith("tag_id", ["tag-1", "tag-2"]);
+      expect(mockArticleTagsIn).toHaveBeenCalledWith("tag_id", [tagId1, tagId2]);
       expect(mockIn).toHaveBeenCalledWith("id", ["article-1"]);
     });
 
@@ -151,11 +153,12 @@ describe("Articles", () => {
         return { select: mockSelect } as never;
       });
 
+      const tagId = "550e8400-e29b-41d4-a716-446655440001";
       await getArticles({
         page: 1,
         limit: 50,
         favoritesOnly: true,
-        tagIds: ["tag-1"],
+        tagIds: [tagId],
       });
 
       expect(mockNot).toHaveBeenCalledWith("favorites", "is", null);
@@ -189,10 +192,62 @@ describe("Articles", () => {
         return { select: mockSelect } as never;
       });
 
-      const result = await getArticles({ page: 1, limit: 50, tagIds: ["tag-1"] });
+      const result = await getArticles({
+        page: 1,
+        limit: 50,
+        tagIds: ["550e8400-e29b-41d4-a716-446655440000"],
+      });
 
       expect(result.data).toEqual([]);
       expect(result.total).toBe(0);
+    });
+
+    it("should return empty when tagIds contains only invalid UUIDs", async () => {
+      const result = await getArticles({
+        page: 1,
+        limit: 50,
+        tagIds: ["invalid-uuid", "foo", "123"],
+      });
+
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
+      expect(supabase.from).not.toHaveBeenCalledWith("article_tags");
+    });
+
+    it("should filter out invalid UUIDs and use only valid ones", async () => {
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [mockArticle],
+        error: null,
+        count: 1,
+      });
+      const mockOrder = vi.fn().mockReturnValue({ range: mockRange });
+      const mockIn = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEqStatus = vi.fn().mockReturnValue({ in: mockIn, order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEqStatus });
+
+      const mockArticleTagsIn = vi.fn().mockResolvedValue({
+        data: [{ article_id: "article-1" }],
+        error: null,
+      });
+      const mockArticleTagsSelect = vi.fn().mockReturnValue({
+        in: mockArticleTagsIn,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "article_tags") {
+          return { select: mockArticleTagsSelect } as never;
+        }
+        return { select: mockSelect } as never;
+      });
+
+      const validUuid = "550e8400-e29b-41d4-a716-446655440000";
+      await getArticles({
+        page: 1,
+        limit: 50,
+        tagIds: ["invalid-uuid", validUuid, "foo"],
+      });
+
+      expect(mockArticleTagsIn).toHaveBeenCalledWith("tag_id", [validUuid]);
     });
   });
 
