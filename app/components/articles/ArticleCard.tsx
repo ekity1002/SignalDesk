@@ -149,40 +149,42 @@ export function ArticleCard({ article, isSubmitting, variant = "default" }: Arti
             </Button>
           </RouterForm>
           {showDeleteButton && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={isSubmitting}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  title="Delete article"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Article</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this article? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <RouterForm method="post" ref={deleteFormRef}>
-                    <input type="hidden" name="intent" value="delete" />
-                    <input type="hidden" name="articleId" value={article.id} />
+            <>
+              <RouterForm method="post" ref={deleteFormRef} className="hidden">
+                <input type="hidden" name="intent" value="delete" />
+                <input type="hidden" name="articleId" value={article.id} />
+              </RouterForm>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isSubmitting}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    title="Delete article"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Article</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this article? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      type="submit"
+                      onClick={() => deleteFormRef.current?.requestSubmit()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Delete
                     </AlertDialogAction>
-                  </RouterForm>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           )}
           {showRestoreButton && (
             <RouterForm method="post">
