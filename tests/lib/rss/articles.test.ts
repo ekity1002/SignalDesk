@@ -6,6 +6,7 @@ import {
   createArticle,
   deleteArticle,
   getArticles,
+  restoreArticle,
   toggleFavorite,
   updateArticleStatus,
 } from "~/lib/rss/articles.server";
@@ -70,6 +71,129 @@ describe("Articles", () => {
         "Failed to fetch articles",
       );
     });
+
+    it("should filter by favoritesOnly when true", async () => {
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [mockArticle],
+        error: null,
+        count: 1,
+      });
+      const mockOrder = vi.fn().mockReturnValue({ range: mockRange });
+      const mockNot = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEqStatus = vi.fn().mockReturnValue({ not: mockNot, order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEqStatus });
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
+
+      await getArticles({ page: 1, limit: 50, favoritesOnly: true });
+
+      expect(mockNot).toHaveBeenCalledWith("favorites", "is", null);
+    });
+
+    it("should filter by tagIds when provided", async () => {
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [mockArticle],
+        error: null,
+        count: 1,
+      });
+      const mockOrder = vi.fn().mockReturnValue({ range: mockRange });
+      const mockIn = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEqStatus = vi.fn().mockReturnValue({ in: mockIn, order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEqStatus });
+
+      // Mock for article_tags subquery
+      const mockArticleTagsIn = vi.fn().mockResolvedValue({
+        data: [{ article_id: "article-1" }],
+        error: null,
+      });
+      const mockArticleTagsSelect = vi.fn().mockReturnValue({
+        in: mockArticleTagsIn,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "article_tags") {
+          return { select: mockArticleTagsSelect } as never;
+        }
+        return { select: mockSelect } as never;
+      });
+
+      await getArticles({ page: 1, limit: 50, tagIds: ["tag-1", "tag-2"] });
+
+      expect(supabase.from).toHaveBeenCalledWith("article_tags");
+      expect(mockArticleTagsIn).toHaveBeenCalledWith("tag_id", ["tag-1", "tag-2"]);
+      expect(mockIn).toHaveBeenCalledWith("id", ["article-1"]);
+    });
+
+    it("should combine favoritesOnly and tagIds filters", async () => {
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [mockArticle],
+        error: null,
+        count: 1,
+      });
+      const mockOrder = vi.fn().mockReturnValue({ range: mockRange });
+      const mockIn = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockNot = vi.fn().mockReturnValue({ in: mockIn, order: mockOrder });
+      const mockEqStatus = vi.fn().mockReturnValue({ not: mockNot, order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEqStatus });
+
+      // Mock for article_tags subquery
+      const mockArticleTagsIn = vi.fn().mockResolvedValue({
+        data: [{ article_id: "article-1" }],
+        error: null,
+      });
+      const mockArticleTagsSelect = vi.fn().mockReturnValue({
+        in: mockArticleTagsIn,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "article_tags") {
+          return { select: mockArticleTagsSelect } as never;
+        }
+        return { select: mockSelect } as never;
+      });
+
+      await getArticles({
+        page: 1,
+        limit: 50,
+        favoritesOnly: true,
+        tagIds: ["tag-1"],
+      });
+
+      expect(mockNot).toHaveBeenCalledWith("favorites", "is", null);
+      expect(mockIn).toHaveBeenCalledWith("id", ["article-1"]);
+    });
+
+    it("should return empty when tagIds filter has no matching articles", async () => {
+      // Mock for articles table (needed for initial query setup)
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+        count: 0,
+      });
+      const mockOrder = vi.fn().mockReturnValue({ range: mockRange });
+      const mockEqStatus = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEqStatus });
+
+      // Mock for article_tags subquery returning empty
+      const mockArticleTagsIn = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      });
+      const mockArticleTagsSelect = vi.fn().mockReturnValue({
+        in: mockArticleTagsIn,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "article_tags") {
+          return { select: mockArticleTagsSelect } as never;
+        }
+        return { select: mockSelect } as never;
+      });
+
+      const result = await getArticles({ page: 1, limit: 50, tagIds: ["tag-1"] });
+
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
+    });
   });
 
   describe("articleExistsByCanonicalUrl", () => {
@@ -112,9 +236,9 @@ describe("Articles", () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
 
-      await expect(
-        articleExistsByCanonicalUrl("https://example.com/article"),
-      ).rejects.toThrow("Failed to check article existence");
+      await expect(articleExistsByCanonicalUrl("https://example.com/article")).rejects.toThrow(
+        "Failed to check article existence",
+      );
     });
   });
 
@@ -225,6 +349,25 @@ describe("Articles", () => {
     });
   });
 
+  describe("restoreArticle", () => {
+    it("should restore an excluded article to visible status", async () => {
+      const mockSingle = vi.fn().mockResolvedValue({
+        data: { ...mockArticle, status: "visible" },
+        error: null,
+      });
+      const mockSelectAfterUpdate = vi.fn().mockReturnValue({ single: mockSingle });
+      const mockEq = vi.fn().mockReturnValue({ select: mockSelectAfterUpdate });
+      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
+      vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate } as never);
+
+      const result = await restoreArticle("article-1");
+
+      expect(supabase.from).toHaveBeenCalledWith("articles");
+      expect(mockUpdate).toHaveBeenCalledWith({ status: "visible" });
+      expect(result.status).toBe("visible");
+    });
+  });
+
   describe("deleteArticle", () => {
     it("should delete an article by id", async () => {
       const mockEq = vi.fn().mockResolvedValue({ error: null });
@@ -308,9 +451,7 @@ describe("Articles", () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
 
-      await expect(toggleFavorite("article-1")).rejects.toThrow(
-        "Failed to check favorite status",
-      );
+      await expect(toggleFavorite("article-1")).rejects.toThrow("Failed to check favorite status");
     });
   });
 });

@@ -12,6 +12,8 @@ export default [
   // Protected routes
   layout("routes/_protected.tsx", [
     index("routes/home.tsx"),
+    route("favorites", "routes/favorites.tsx"),
+    route("excluded", "routes/excluded.tsx"),
     route("sources", "routes/sources.tsx"),
     route("tags", "routes/tags.tsx"),
   ]),
