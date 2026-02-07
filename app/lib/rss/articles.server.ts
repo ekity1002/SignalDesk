@@ -1,5 +1,7 @@
 import { supabase } from "~/lib/supabase.server";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type Article = {
   id: string;
   title: string;
@@ -16,7 +18,7 @@ export type Article = {
 export type ArticleWithRelations = Article & {
   sources: { id: string; name: string } | null;
   article_tags: { tag_id: string; tags: { id: string; name: string } }[];
-  favorites: { id: string }[];
+  favorites: { id: string } | null;
 };
 
 export type CreateArticleInput = {
@@ -33,15 +35,15 @@ type GetArticlesParams = {
   page: number;
   limit: number;
   status?: "visible" | "excluded";
-  tagId?: string;
+  tagIds?: string[];
   search?: string;
   favoritesOnly?: boolean;
 };
 
 export async function getArticles(
   params: GetArticlesParams,
-): Promise<{ data: Article[]; total: number }> {
-  const { page, limit, status, search } = params;
+): Promise<{ data: ArticleWithRelations[]; total: number }> {
+  const { page, limit, status, search, favoritesOnly, tagIds } = params;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
@@ -57,6 +59,32 @@ export async function getArticles(
     if (sanitized.length > 0) {
       query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`);
     }
+  }
+
+  if (favoritesOnly) {
+    query = query.not("favorites", "is", null);
+  }
+
+  if (tagIds && tagIds.length > 0) {
+    const validTagIds = tagIds.filter((id) => UUID_REGEX.test(id));
+    if (validTagIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+
+    const { data: taggedArticles, error: tagError } = await supabase
+      .from("article_tags")
+      .select("article_id")
+      .in("tag_id", validTagIds);
+
+    if (tagError) {
+      throw new Error("Failed to fetch tagged articles");
+    }
+
+    const articleIds = taggedArticles?.map((r) => r.article_id) ?? [];
+    if (articleIds.length === 0) {
+      return { data: [], total: 0 };
+    }
+    query = query.in("id", articleIds);
   }
 
   const { data, error, count } = await query
@@ -140,6 +168,10 @@ export async function updateArticleStatus(
   }
 
   return data;
+}
+
+export async function restoreArticle(id: string): Promise<Article> {
+  return updateArticleStatus(id, "visible");
 }
 
 export async function deleteArticle(id: string): Promise<void> {

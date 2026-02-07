@@ -1,5 +1,17 @@
-import { ExternalLink, Star, Trash2 } from "lucide-react";
+import { ExternalLink, RotateCcw, Star, Trash2 } from "lucide-react";
+import { useRef } from "react";
 import { Form as RouterForm } from "react-router";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
@@ -19,9 +31,10 @@ type ArticleCardProps = {
     status: "visible" | "excluded";
     sources: { id: string; name: string } | null;
     article_tags: ArticleTag[] | null;
-    favorites: { id: string }[] | null;
+    favorites: { id: string } | null;
   };
   isSubmitting: boolean;
+  variant?: "default" | "favorite" | "excluded";
 };
 
 function formatRelativeTime(dateString: string | null): string {
@@ -39,11 +52,27 @@ function formatRelativeTime(dateString: string | null): string {
   return date.toLocaleDateString();
 }
 
-export function ArticleCard({ article, isSubmitting }: ArticleCardProps) {
-  const isFavorited = (article.favorites ?? []).length > 0;
+function getBorderColor(variant: "default" | "favorite" | "excluded"): string {
+  switch (variant) {
+    case "favorite":
+      return "border-l-yellow-500";
+    case "excluded":
+      return "border-l-gray-400";
+    default:
+      return "border-l-orange-500";
+  }
+}
+
+export function ArticleCard({ article, isSubmitting, variant = "default" }: ArticleCardProps) {
+  const isFavorited = article.favorites !== null;
+  const showTags = variant !== "excluded";
+  const showPostDraft = variant !== "excluded";
+  const showDeleteButton = variant !== "excluded";
+  const showRestoreButton = variant === "excluded";
+  const deleteFormRef = useRef<HTMLFormElement>(null);
 
   return (
-    <Card className="border-sidebar-border border-l-4 border-l-orange-500 bg-card p-4">
+    <Card className={`border-sidebar-border border-l-4 ${getBorderColor(variant)} bg-card p-4`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {/* Source name and time */}
@@ -74,7 +103,7 @@ export function ArticleCard({ article, isSubmitting }: ArticleCardProps) {
           )}
 
           {/* Tags */}
-          {(article.article_tags ?? []).length > 0 && (
+          {showTags && (article.article_tags ?? []).length > 0 && (
             <div className="flex flex-wrap gap-1">
               {(article.article_tags ?? []).map(
                 (at) =>
@@ -90,15 +119,17 @@ export function ArticleCard({ article, isSubmitting }: ArticleCardProps) {
 
         {/* Action buttons */}
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            className="gap-1 text-purple-600"
-            title="Coming soon"
-          >
-            Post Draft
-          </Button>
+          {showPostDraft && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="gap-1 text-purple-600"
+              title="Coming soon"
+            >
+              Post Draft
+            </Button>
+          )}
           <RouterForm method="post">
             <input type="hidden" name="intent" value="favorite" />
             <input type="hidden" name="articleId" value={article.id} />
@@ -114,23 +145,63 @@ export function ArticleCard({ article, isSubmitting }: ArticleCardProps) {
               }
               title={isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
-              <Star className="h-4 w-4" fill={isFavorited ? "currentColor" : "none"} />
+              <Star className="h-4 w-4" style={{ fill: isFavorited ? "#eab308" : "none" }} />
             </Button>
           </RouterForm>
-          <RouterForm method="post">
-            <input type="hidden" name="intent" value="delete" />
-            <input type="hidden" name="articleId" value={article.id} />
-            <Button
-              type="submit"
-              variant="ghost"
-              size="icon"
-              disabled={isSubmitting}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              title="Delete article"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </RouterForm>
+          {showDeleteButton && (
+            <>
+              <RouterForm method="post" ref={deleteFormRef} className="hidden">
+                <input type="hidden" name="intent" value="delete" />
+                <input type="hidden" name="articleId" value={article.id} />
+              </RouterForm>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isSubmitting}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    title="Delete article"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Article</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this article? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteFormRef.current?.requestSubmit()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          {showRestoreButton && (
+            <RouterForm method="post">
+              <input type="hidden" name="intent" value="restore" />
+              <input type="hidden" name="articleId" value={article.id} />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                disabled={isSubmitting}
+                className="text-muted-foreground hover:text-green-600"
+                title="Restore article"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </RouterForm>
+          )}
         </div>
       </div>
     </Card>
