@@ -12,6 +12,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { getSession } from "~/lib/auth/session.server";
+import { getPrompts } from "~/lib/prompts/prompts.server";
 import { deleteArticle, getArticles, toggleFavorite } from "~/lib/rss/articles.server";
 import type { Route } from "./+types/favorites";
 
@@ -35,19 +36,23 @@ export async function loader({ request }: Route.LoaderArgs) {
   const page = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
   const search = url.searchParams.get("search") ?? undefined;
 
-  const articlesResult = await getArticles({
-    page,
-    limit: ARTICLES_PER_PAGE,
-    status: "visible",
-    favoritesOnly: true,
-    search,
-  });
+  const [articlesResult, prompts] = await Promise.all([
+    getArticles({
+      page,
+      limit: ARTICLES_PER_PAGE,
+      status: "visible",
+      favoritesOnly: true,
+      search,
+    }),
+    getPrompts(),
+  ]);
 
   return {
     articles: articlesResult.data,
     total: articlesResult.total,
     page,
     totalPages: Math.ceil(articlesResult.total / ARTICLES_PER_PAGE),
+    prompts,
     search: search ?? "",
   };
 }
@@ -95,7 +100,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Favorites() {
-  const { articles, total, page, totalPages, search } = useLoaderData<typeof loader>();
+  const { articles, total, page, totalPages, prompts, search } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -172,6 +177,7 @@ export default function Favorites() {
               article={article}
               isSubmitting={isSubmitting}
               variant="favorite"
+              prompts={prompts}
             />
           ))
         )}
