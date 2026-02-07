@@ -99,8 +99,10 @@ export function ArticleCard({
   };
 
   return (
-    <Card className={`border-sidebar-border border-l-4 ${getBorderColor(variant)} bg-card p-4`}>
-      <div className="flex items-start justify-between gap-4">
+    <Card
+      className={`border-sidebar-border border-l-4 ${getBorderColor(variant)} bg-card p-3 sm:p-4`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
           {/* Source name and time */}
           <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
@@ -118,9 +120,9 @@ export function ArticleCard({
             href={article.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="group mb-1 flex items-center gap-1"
+            className="group mb-1 flex items-start gap-1"
           >
-            <h3 className="font-medium group-hover:text-blue-500">{article.title}</h3>
+            <h3 className="break-words font-medium group-hover:text-blue-500">{article.title}</h3>
             <ExternalLink className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           </a>
 
@@ -145,7 +147,7 @@ export function ArticleCard({
         </div>
 
         {/* Action buttons */}
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 self-start sm:self-auto">
           {showPostDraft && (
             <>
               <Button

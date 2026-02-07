@@ -23,9 +23,10 @@ type NavSection = {
 
 type SidebarProps = {
   sourceCount?: number;
+  onNavigate?: () => void;
 };
 
-export function Sidebar({ sourceCount = 0 }: SidebarProps) {
+export function Sidebar({ sourceCount = 0, onNavigate }: SidebarProps) {
   const location = useLocation();
 
   const navigation: NavSection[] = [
@@ -81,6 +82,7 @@ export function Sidebar({ sourceCount = 0 }: SidebarProps) {
                   <li key={item.href}>
                     <Link
                       to={item.href}
+                      onClick={onNavigate}
                       className={cn(
                         "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
                         isActive
@@ -137,14 +139,14 @@ export function Sidebar({ sourceCount = 0 }: SidebarProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top">
               <DropdownMenuItem asChild>
-                <Link to="/settings">
+                <Link to="/settings" onClick={onNavigate}>
                   <Settings className="h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/logout" className="text-destructive">
+                <Link to="/logout" onClick={onNavigate} className="text-destructive">
                   <LogOut className="h-4 w-4" />
                   Sign out
                 </Link>
