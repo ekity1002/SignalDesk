@@ -5,6 +5,7 @@ import {
   attachTagsToArticle,
   createArticle,
   deleteArticle,
+  deleteOldArticles,
   getArticles,
   restoreArticle,
   toggleFavorite,
@@ -507,6 +508,115 @@ describe("Articles", () => {
       vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
 
       await expect(toggleFavorite("article-1")).rejects.toThrow("Failed to check favorite status");
+    });
+  });
+
+  describe("deleteOldArticles", () => {
+    it("should delete articles older than retention period", async () => {
+      // Mock favorites table (no favorites)
+      const mockFavoritesSelect = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      });
+
+      // Mock articles delete
+      const mockDeleteLt = vi.fn().mockResolvedValue({ error: null, count: 3 });
+      const mockDeleteNeq = vi.fn().mockReturnValue({ lt: mockDeleteLt });
+      const mockDelete = vi.fn().mockReturnValue({ neq: mockDeleteNeq });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "favorites") {
+          return { select: mockFavoritesSelect } as never;
+        }
+        return { delete: mockDelete } as never;
+      });
+
+      const result = await deleteOldArticles(7);
+
+      expect(supabase.from).toHaveBeenCalledWith("favorites");
+      expect(supabase.from).toHaveBeenCalledWith("articles");
+      expect(result.deletedCount).toBe(3);
+    });
+
+    it("should exclude favorited articles from deletion", async () => {
+      // Mock favorites table
+      const mockFavoritesSelect = vi.fn().mockResolvedValue({
+        data: [{ article_id: "article-1" }, { article_id: "article-2" }],
+        error: null,
+      });
+
+      // Mock articles delete with not in filter
+      const mockDeleteLt = vi.fn().mockResolvedValue({ error: null, count: 5 });
+      const mockDeleteNotIn = vi.fn().mockReturnValue({ lt: mockDeleteLt });
+      const mockDeleteNeq = vi.fn().mockReturnValue({ not: mockDeleteNotIn });
+      const mockDelete = vi.fn().mockReturnValue({ neq: mockDeleteNeq });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "favorites") {
+          return { select: mockFavoritesSelect } as never;
+        }
+        return { delete: mockDelete } as never;
+      });
+
+      const result = await deleteOldArticles(7);
+
+      expect(mockDeleteNotIn).toHaveBeenCalledWith("id", "in", "(article-1,article-2)");
+      expect(result.deletedCount).toBe(5);
+    });
+
+    it("should return 0 when no articles to delete", async () => {
+      const mockFavoritesSelect = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      });
+
+      const mockDeleteLt = vi.fn().mockResolvedValue({ error: null, count: 0 });
+      const mockDeleteNeq = vi.fn().mockReturnValue({ lt: mockDeleteLt });
+      const mockDelete = vi.fn().mockReturnValue({ neq: mockDeleteNeq });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "favorites") {
+          return { select: mockFavoritesSelect } as never;
+        }
+        return { delete: mockDelete } as never;
+      });
+
+      const result = await deleteOldArticles(7);
+
+      expect(result.deletedCount).toBe(0);
+    });
+
+    it("should throw error when favorites fetch fails", async () => {
+      const mockFavoritesSelect = vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: "DB Error" },
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ select: mockFavoritesSelect } as never);
+
+      await expect(deleteOldArticles(7)).rejects.toThrow("Failed to fetch favorites");
+    });
+
+    it("should throw error when delete fails", async () => {
+      const mockFavoritesSelect = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      });
+
+      const mockDeleteLt = vi
+        .fn()
+        .mockResolvedValue({ error: { message: "Delete error" }, count: null });
+      const mockDeleteNeq = vi.fn().mockReturnValue({ lt: mockDeleteLt });
+      const mockDelete = vi.fn().mockReturnValue({ neq: mockDeleteNeq });
+
+      vi.mocked(supabase.from).mockImplementation((table) => {
+        if (table === "favorites") {
+          return { select: mockFavoritesSelect } as never;
+        }
+        return { delete: mockDelete } as never;
+      });
+
+      await expect(deleteOldArticles(7)).rejects.toThrow("Failed to delete old articles");
     });
   });
 });
