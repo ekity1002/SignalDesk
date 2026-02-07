@@ -213,3 +213,32 @@ export async function toggleFavorite(articleId: string): Promise<{ favorited: bo
 
   return { favorited: true };
 }
+
+export async function deleteOldArticles(retentionDays: number): Promise<{ deletedCount: number }> {
+  const { data: favorites, error: favoritesError } = await supabase
+    .from("favorites")
+    .select("article_id");
+
+  if (favoritesError) {
+    throw new Error("Failed to fetch favorites");
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+  const favoriteArticleIds = favorites?.map((f) => f.article_id) ?? [];
+
+  let query = supabase.from("articles").delete({ count: "exact" }).neq("status", "excluded");
+
+  if (favoriteArticleIds.length > 0) {
+    query = query.not("id", "in", `(${favoriteArticleIds.join(",")})`);
+  }
+
+  const { error, count } = await query.lt("created_at", cutoffDate.toISOString());
+
+  if (error) {
+    throw new Error("Failed to delete old articles");
+  }
+
+  return { deletedCount: count ?? 0 };
+}

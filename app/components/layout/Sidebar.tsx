@@ -135,9 +135,11 @@ export function Sidebar({ sourceCount = 0 }: SidebarProps) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top">
-              <DropdownMenuItem disabled>
-                <Settings className="h-4 w-4" />
-                Settings
+              <DropdownMenuItem asChild>
+                <Link to="/settings">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
