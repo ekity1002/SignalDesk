@@ -1,5 +1,5 @@
 import { ExternalLink, RotateCcw, Star, Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Form as RouterForm } from "react-router";
 import {
   AlertDialog,
@@ -15,10 +15,18 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+import { PostDraftModal } from "./PostDraftModal";
 
 type ArticleTag = {
   tag_id: string;
   tags: { id: string; name: string } | null;
+};
+
+type Prompt = {
+  id: string;
+  name: string;
+  template: string;
+  is_default: boolean;
 };
 
 type ArticleCardProps = {
@@ -35,6 +43,7 @@ type ArticleCardProps = {
   };
   isSubmitting: boolean;
   variant?: "default" | "favorite" | "excluded";
+  prompts?: Prompt[];
 };
 
 function formatRelativeTime(dateString: string | null): string {
@@ -63,13 +72,31 @@ function getBorderColor(variant: "default" | "favorite" | "excluded"): string {
   }
 }
 
-export function ArticleCard({ article, isSubmitting, variant = "default" }: ArticleCardProps) {
+export function ArticleCard({
+  article,
+  isSubmitting,
+  variant = "default",
+  prompts = [],
+}: ArticleCardProps) {
   const isFavorited = article.favorites !== null;
   const showTags = variant !== "excluded";
   const showPostDraft = variant !== "excluded";
   const showDeleteButton = variant !== "excluded";
   const showRestoreButton = variant === "excluded";
   const deleteFormRef = useRef<HTMLFormElement>(null);
+  const [postDraftModalOpen, setPostDraftModalOpen] = useState(false);
+
+  const articleContext = {
+    title: article.title,
+    description: article.description ?? undefined,
+    link: article.link,
+    publishedAt: article.published_at ?? undefined,
+    matchedTags: (article.article_tags ?? [])
+      .filter(
+        (at): at is ArticleTag & { tags: NonNullable<ArticleTag["tags"]> } => at.tags !== null,
+      )
+      .map((at) => at.tags.name),
+  };
 
   return (
     <Card className={`border-sidebar-border border-l-4 ${getBorderColor(variant)} bg-card p-4`}>
@@ -120,15 +147,24 @@ export function ArticleCard({ article, isSubmitting, variant = "default" }: Arti
         {/* Action buttons */}
         <div className="flex shrink-0 items-center gap-1">
           {showPostDraft && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              className="gap-1 text-purple-600"
-              title="Coming soon"
-            >
-              Post Draft
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPostDraftModalOpen(true)}
+                className="gap-1 text-purple-600"
+                disabled={prompts.length === 0}
+                title={prompts.length === 0 ? "No prompts available" : "Generate post draft"}
+              >
+                Post Draft
+              </Button>
+              <PostDraftModal
+                open={postDraftModalOpen}
+                onOpenChange={setPostDraftModalOpen}
+                article={articleContext}
+                prompts={prompts}
+              />
+            </>
           )}
           <RouterForm method="post">
             <input type="hidden" name="intent" value="favorite" />

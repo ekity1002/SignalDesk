@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/auth/session.server", () => ({
   getSession: vi.fn(),
@@ -11,8 +11,8 @@ vi.mock("~/lib/rss/articles.server", () => ({
 }));
 
 import { getSession } from "~/lib/auth/session.server";
-import { getArticles, toggleFavorite, restoreArticle } from "~/lib/rss/articles.server";
-import { loader, action } from "~/routes/excluded";
+import { getArticles, restoreArticle, toggleFavorite } from "~/lib/rss/articles.server";
+import { action, loader } from "~/routes/excluded";
 
 function createRequest(url: string, method = "GET", formData?: Record<string, string>): Request {
   if (method === "POST" && formData) {
@@ -40,7 +40,9 @@ describe("excluded route", () => {
         get: () => undefined,
       } as never);
 
-      await expect(loader(createArgs(createRequest("http://localhost/excluded")))).rejects.toThrow();
+      await expect(
+        loader(createArgs(createRequest("http://localhost/excluded"))),
+      ).rejects.toThrow();
     });
 
     it("should return excluded articles when authenticated", async () => {
@@ -48,9 +50,7 @@ describe("excluded route", () => {
         get: (key: string) => (key === "isAuthenticated" ? true : undefined),
       } as never);
 
-      const mockArticles = [
-        { id: "1", title: "Excluded Article 1", status: "excluded" },
-      ];
+      const mockArticles = [{ id: "1", title: "Excluded Article 1", status: "excluded" }];
       vi.mocked(getArticles).mockResolvedValue({
         data: mockArticles as never,
         total: 1,
@@ -80,9 +80,7 @@ describe("excluded route", () => {
 
       await loader(createArgs(createRequest("http://localhost/excluded?search=test")));
 
-      expect(getArticles).toHaveBeenCalledWith(
-        expect.objectContaining({ search: "test" }),
-      );
+      expect(getArticles).toHaveBeenCalledWith(expect.objectContaining({ search: "test" }));
     });
 
     it("should handle pagination", async () => {
@@ -97,9 +95,7 @@ describe("excluded route", () => {
 
       const result = await loader(createArgs(createRequest("http://localhost/excluded?page=2")));
 
-      expect(getArticles).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2 }),
-      );
+      expect(getArticles).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
       expect(result.page).toBe(2);
       expect(result.totalPages).toBe(2);
     });

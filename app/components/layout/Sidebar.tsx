@@ -1,4 +1,4 @@
-import { EyeOff, LayoutGrid, LogOut, Rss, Settings, Star, Tags } from "lucide-react";
+import { EyeOff, FileText, LayoutGrid, LogOut, Rss, Settings, Star, Tags } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import {
   DropdownMenu,
@@ -47,6 +47,7 @@ export function Sidebar({ sourceCount = 0 }: SidebarProps) {
           badge: `${sourceCount}/10`,
         },
         { label: "Interest Tags", href: "/tags", icon: Tags },
+        { label: "Prompts", href: "/prompts", icon: FileText },
       ],
     },
   ];

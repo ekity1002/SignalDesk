@@ -14,6 +14,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { getSession } from "~/lib/auth/session.server";
+import { getPrompts } from "~/lib/prompts/prompts.server";
 import { deleteArticle, getArticles, toggleFavorite } from "~/lib/rss/articles.server";
 import { getTags } from "~/lib/tags/tags.server";
 import type { Route } from "./+types/home";
@@ -39,7 +40,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const search = url.searchParams.get("search") ?? undefined;
   const tagIds = url.searchParams.getAll("tags");
 
-  const [articlesResult, tags] = await Promise.all([
+  const [articlesResult, tags, prompts] = await Promise.all([
     getArticles({
       page,
       limit: ARTICLES_PER_PAGE,
@@ -48,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       tagIds: tagIds.length > 0 ? tagIds : undefined,
     }),
     getTags(),
+    getPrompts(),
   ]);
 
   return {
@@ -56,6 +58,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     page,
     totalPages: Math.ceil(articlesResult.total / ARTICLES_PER_PAGE),
     tags,
+    prompts,
     search: search ?? "",
   };
 }
@@ -115,7 +118,8 @@ function buildPaginationUrl(page: number, search: string, searchParams: URLSearc
 }
 
 export default function Home() {
-  const { articles, total, page, totalPages, tags, search } = useLoaderData<typeof loader>();
+  const { articles, total, page, totalPages, tags, prompts, search } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -197,7 +201,12 @@ export default function Home() {
           </div>
         ) : (
           articles.map((article) => (
-            <ArticleCard key={article.id} article={article} isSubmitting={isSubmitting} />
+            <ArticleCard
+              key={article.id}
+              article={article}
+              isSubmitting={isSubmitting}
+              prompts={prompts}
+            />
           ))
         )}
       </div>
