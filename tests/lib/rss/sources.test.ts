@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type CreateSourceInput,
   createSource,
   deleteSource,
+  getMaxSources,
   getSources,
   type Source,
   toggleSourceActive,
@@ -16,6 +17,49 @@ vi.mock("~/lib/supabase.server", () => ({
 }));
 
 import { supabase } from "~/lib/supabase.server";
+
+describe("getMaxSources", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is not set", () => {
+    delete process.env.MAX_RSS_SOURCES;
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return value from MAX_RSS_SOURCES when set", () => {
+    process.env.MAX_RSS_SOURCES = "20";
+    expect(getMaxSources()).toBe(20);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is invalid", () => {
+    process.env.MAX_RSS_SOURCES = "invalid";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is empty", () => {
+    process.env.MAX_RSS_SOURCES = "";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is negative", () => {
+    process.env.MAX_RSS_SOURCES = "-5";
+    expect(getMaxSources()).toBe(10);
+  });
+
+  it("should return default value 10 when MAX_RSS_SOURCES is zero", () => {
+    process.env.MAX_RSS_SOURCES = "0";
+    expect(getMaxSources()).toBe(10);
+  });
+});
 
 describe("RSS Sources", () => {
   beforeEach(() => {
