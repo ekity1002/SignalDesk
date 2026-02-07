@@ -1,11 +1,12 @@
+import {
+  createUnauthorizedResponse,
+  verifyCronAuth,
+} from "~/lib/cron/auth.server";
 import { fetchAllRssSources } from "~/lib/rss/fetch-rss.server";
 
 export async function loader({ request }: { request: Request }) {
-  const authHeader = request.headers.get("Authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!verifyCronAuth(request)) {
+    return createUnauthorizedResponse();
   }
 
   try {
