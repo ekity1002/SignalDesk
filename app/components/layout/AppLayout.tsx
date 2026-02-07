@@ -1,7 +1,7 @@
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "~/components/ui/sheet";
 import { Sidebar } from "./Sidebar";
 
 type AppLayoutProps = {
@@ -28,7 +28,8 @@ export function AppLayout({ children, sourceCount }: AppLayoutProps) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
+            <SheetContent side="left" className="w-64 p-0" aria-describedby={undefined}>
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <Sidebar sourceCount={sourceCount} onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
