@@ -145,7 +145,7 @@ export default function SourcesPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="w-full overflow-hidden p-8">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <Link
@@ -237,9 +237,9 @@ export default function SourcesPage() {
             sources.map((source) => (
               <Card
                 key={source.id}
-                className="flex items-center justify-between border-sidebar-border bg-card p-4"
+                className="flex items-center justify-between overflow-hidden border-sidebar-border bg-card p-4"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   <Badge
                     variant={source.is_active ? "default" : "secondary"}
                     className={
@@ -250,9 +250,11 @@ export default function SourcesPage() {
                   >
                     {source.is_active ? "Active" : "Inactive"}
                   </Badge>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-medium">{source.name}</h3>
-                    <p className="text-sm text-muted-foreground">{source.url}</p>
+                    <p className="break-all text-sm text-muted-foreground">
+                      {source.url}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
