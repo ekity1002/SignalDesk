@@ -112,36 +112,36 @@ export default function Excluded() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <EyeOff className="h-5 w-5 text-gray-500" />
           <h1 className="text-xl font-semibold">Excluded Items</h1>
-          <Badge variant="secondary" className="min-w-[80px] justify-center">
+          <Badge variant="secondary" className="min-w-[60px] justify-center sm:min-w-[80px]">
             {total} items
           </Badge>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex items-center gap-2">
-            <div className="relative">
+          <form onSubmit={handleSearch} className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 name="search"
                 placeholder="Search excluded..."
                 defaultValue={search}
-                className="w-64 bg-background pl-9"
+                className="w-full bg-background pl-9 sm:w-64"
               />
             </div>
-            <Button type="submit" variant="outline" size="sm">
+            <Button type="submit" variant="outline" size="sm" className="shrink-0">
               Search
             </Button>
           </form>
 
           {/* Refresh */}
-          <Link to="/excluded" reloadDocument>
+          <Link to="/excluded" reloadDocument className="shrink-0">
             <Button variant="outline" size="icon" title="Refresh">
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -178,7 +178,7 @@ export default function Excluded() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row">
           <Link
             to={`?page=${page - 1}${search ? `&search=${encodeURIComponent(search)}` : ""}`}
             className={page <= 1 ? "pointer-events-none opacity-50" : ""}
@@ -188,7 +188,7 @@ export default function Excluded() {
               Previous
             </Button>
           </Link>
-          <span className="text-sm text-muted-foreground">
+          <span className="order-first text-sm text-muted-foreground sm:order-none">
             Page {page} of {totalPages}
           </span>
           <Link
