@@ -195,6 +195,23 @@ describe("fetchRssSource", () => {
     expect(result.created).toBe(0);
     expect(result.errors).toHaveLength(1);
   });
+
+  it("should handle URLs with Japanese characters", async () => {
+    const sourceWithJapaneseUrl: Source = {
+      ...mockSource,
+      url: "https://news.google.com/rss/search?q=(Nikon%20OR%20ニコン)%20when:1d&hl=ja",
+    };
+
+    mockParseURL.mockResolvedValue({ items: [] });
+
+    const result = await fetchRssSource(sourceWithJapaneseUrl, mockTags);
+
+    // The URL should be properly encoded before being passed to parseURL
+    expect(mockParseURL).toHaveBeenCalledWith(
+      "https://news.google.com/rss/search?q=(Nikon%20OR%20%E3%83%8B%E3%82%B3%E3%83%B3)%20when:1d&hl=ja"
+    );
+    expect(result.errors).toEqual([]);
+  });
 });
 
 describe("fetchAllRssSources", () => {

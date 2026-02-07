@@ -25,6 +25,15 @@ export type BatchFetchResult = {
 
 const parser = new RssParser();
 
+function encodeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.href;
+  } catch {
+    return url;
+  }
+}
+
 export async function fetchRssSource(
   source: Source,
   tags: TagWithKeywords[],
@@ -38,7 +47,8 @@ export async function fetchRssSource(
   };
 
   try {
-    const feed = await parser.parseURL(source.url);
+    const encodedUrl = encodeUrl(source.url);
+    const feed = await parser.parseURL(encodedUrl);
 
     for (const item of feed.items) {
       try {
