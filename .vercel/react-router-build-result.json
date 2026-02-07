@@ -1,0 +1,336 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/logout": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/sources": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/prompts": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/generate-post": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/cron/fetch-rss": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/cron/cleanup-old-articles": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/favorites": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/excluded": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/sources": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/tags": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/prompts": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/settings": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "app/routes/login.tsx",
+        "path": "login",
+        "config": {}
+      },
+      "routes/logout": {
+        "id": "routes/logout",
+        "parentId": "root",
+        "file": "app/routes/logout.tsx",
+        "path": "logout",
+        "config": {}
+      },
+      "routes/api/sources": {
+        "id": "routes/api/sources",
+        "parentId": "root",
+        "file": "app/routes/api/sources.ts",
+        "path": "api/sources",
+        "config": {}
+      },
+      "routes/api/prompts": {
+        "id": "routes/api/prompts",
+        "parentId": "root",
+        "file": "app/routes/api/prompts.ts",
+        "path": "api/prompts",
+        "config": {}
+      },
+      "routes/api/generate-post": {
+        "id": "routes/api/generate-post",
+        "parentId": "root",
+        "file": "app/routes/api/generate-post.ts",
+        "path": "api/generate-post",
+        "config": {}
+      },
+      "routes/api/cron/fetch-rss": {
+        "id": "routes/api/cron/fetch-rss",
+        "parentId": "root",
+        "file": "app/routes/api/cron/fetch-rss.ts",
+        "path": "api/cron/fetch-rss",
+        "config": {}
+      },
+      "routes/api/cron/cleanup-old-articles": {
+        "id": "routes/api/cron/cleanup-old-articles",
+        "parentId": "root",
+        "file": "app/routes/api/cron/cleanup-old-articles.ts",
+        "path": "api/cron/cleanup-old-articles",
+        "config": {}
+      },
+      "routes/_protected": {
+        "id": "routes/_protected",
+        "parentId": "root",
+        "file": "app/routes/_protected.tsx",
+        "config": {}
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "routes/_protected",
+        "file": "app/routes/home.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/favorites": {
+        "id": "routes/favorites",
+        "parentId": "routes/_protected",
+        "file": "app/routes/favorites.tsx",
+        "path": "favorites",
+        "config": {}
+      },
+      "routes/excluded": {
+        "id": "routes/excluded",
+        "parentId": "routes/_protected",
+        "file": "app/routes/excluded.tsx",
+        "path": "excluded",
+        "config": {}
+      },
+      "routes/sources": {
+        "id": "routes/sources",
+        "parentId": "routes/_protected",
+        "file": "app/routes/sources.tsx",
+        "path": "sources",
+        "config": {}
+      },
+      "routes/tags": {
+        "id": "routes/tags",
+        "parentId": "routes/_protected",
+        "file": "app/routes/tags.tsx",
+        "path": "tags",
+        "config": {}
+      },
+      "routes/prompts": {
+        "id": "routes/prompts",
+        "parentId": "routes/_protected",
+        "file": "app/routes/prompts.tsx",
+        "path": "prompts",
+        "config": {}
+      },
+      "routes/settings": {
+        "id": "routes/settings",
+        "parentId": "routes/_protected",
+        "file": "app/routes/settings.tsx",
+        "path": "settings",
+        "config": {}
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "/Users/ken.tomono/dev/SignalDesk/app",
+    "basename": "/",
+    "buildDirectory": "/Users/ken.tomono/dev/SignalDesk/build",
+    "future": {
+      "unstable_optimizeDeps": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_trailingSlashAwareDataRequests": false,
+      "v8_middleware": false,
+      "v8_splitRouteModules": false,
+      "v8_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "routes/login.tsx",
+        "path": "login"
+      },
+      "routes/logout": {
+        "id": "routes/logout",
+        "parentId": "root",
+        "file": "routes/logout.tsx",
+        "path": "logout"
+      },
+      "routes/api/sources": {
+        "id": "routes/api/sources",
+        "parentId": "root",
+        "file": "routes/api/sources.ts",
+        "path": "api/sources"
+      },
+      "routes/api/prompts": {
+        "id": "routes/api/prompts",
+        "parentId": "root",
+        "file": "routes/api/prompts.ts",
+        "path": "api/prompts"
+      },
+      "routes/api/generate-post": {
+        "id": "routes/api/generate-post",
+        "parentId": "root",
+        "file": "routes/api/generate-post.ts",
+        "path": "api/generate-post"
+      },
+      "routes/api/cron/fetch-rss": {
+        "id": "routes/api/cron/fetch-rss",
+        "parentId": "root",
+        "file": "routes/api/cron/fetch-rss.ts",
+        "path": "api/cron/fetch-rss"
+      },
+      "routes/api/cron/cleanup-old-articles": {
+        "id": "routes/api/cron/cleanup-old-articles",
+        "parentId": "root",
+        "file": "routes/api/cron/cleanup-old-articles.ts",
+        "path": "api/cron/cleanup-old-articles"
+      },
+      "routes/_protected": {
+        "id": "routes/_protected",
+        "parentId": "root",
+        "file": "routes/_protected.tsx"
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "routes/_protected",
+        "file": "routes/home.tsx",
+        "index": true
+      },
+      "routes/favorites": {
+        "id": "routes/favorites",
+        "parentId": "routes/_protected",
+        "file": "routes/favorites.tsx",
+        "path": "favorites"
+      },
+      "routes/excluded": {
+        "id": "routes/excluded",
+        "parentId": "routes/_protected",
+        "file": "routes/excluded.tsx",
+        "path": "excluded"
+      },
+      "routes/sources": {
+        "id": "routes/sources",
+        "parentId": "routes/_protected",
+        "file": "routes/sources.tsx",
+        "path": "sources"
+      },
+      "routes/tags": {
+        "id": "routes/tags",
+        "parentId": "routes/_protected",
+        "file": "routes/tags.tsx",
+        "path": "tags"
+      },
+      "routes/prompts": {
+        "id": "routes/prompts",
+        "parentId": "routes/_protected",
+        "file": "routes/prompts.tsx",
+        "path": "prompts"
+      },
+      "routes/settings": {
+        "id": "routes/settings",
+        "parentId": "routes/_protected",
+        "file": "routes/settings.tsx",
+        "path": "settings"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "allowedActionOrigins": false,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "file": "routes/login.tsx",
+            "path": "login"
+          },
+          {
+            "file": "routes/logout.tsx",
+            "path": "logout"
+          },
+          {
+            "file": "routes/api/sources.ts",
+            "path": "api/sources"
+          },
+          {
+            "file": "routes/api/prompts.ts",
+            "path": "api/prompts"
+          },
+          {
+            "file": "routes/api/generate-post.ts",
+            "path": "api/generate-post"
+          },
+          {
+            "file": "routes/api/cron/fetch-rss.ts",
+            "path": "api/cron/fetch-rss"
+          },
+          {
+            "file": "routes/api/cron/cleanup-old-articles.ts",
+            "path": "api/cron/cleanup-old-articles"
+          },
+          {
+            "file": "routes/_protected.tsx",
+            "children": [
+              {
+                "file": "routes/home.tsx",
+                "index": true
+              },
+              {
+                "file": "routes/favorites.tsx",
+                "path": "favorites"
+              },
+              {
+                "file": "routes/excluded.tsx",
+                "path": "excluded"
+              },
+              {
+                "file": "routes/sources.tsx",
+                "path": "sources"
+              },
+              {
+                "file": "routes/tags.tsx",
+                "path": "tags"
+              },
+              {
+                "file": "routes/prompts.tsx",
+                "path": "prompts"
+              },
+              {
+                "file": "routes/settings.tsx",
+                "path": "settings"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}
