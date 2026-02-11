@@ -21,6 +21,10 @@ export function matchTags(
   const matched: MatchedTag[] = [];
 
   for (const tag of tags) {
+    if (!tag.is_active) {
+      continue;
+    }
+
     const hasMatch = tag.keywords.some((kw) => text.includes(kw.keyword.toLowerCase()));
 
     if (hasMatch) {

@@ -252,9 +252,7 @@ export default function SourcesPage() {
                   </Badge>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium">{source.name}</h3>
-                    <p className="break-all text-sm text-muted-foreground">
-                      {source.url}
-                    </p>
+                    <p className="break-all text-sm text-muted-foreground">{source.url}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

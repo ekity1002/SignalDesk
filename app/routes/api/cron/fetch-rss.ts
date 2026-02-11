@@ -1,7 +1,4 @@
-import {
-  createUnauthorizedResponse,
-  verifyCronAuth,
-} from "~/lib/cron/auth.server";
+import { createUnauthorizedResponse, verifyCronAuth } from "~/lib/cron/auth.server";
 import { fetchAllRssSources } from "~/lib/rss/fetch-rss.server";
 
 export async function loader({ request }: { request: Request }) {
