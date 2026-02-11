@@ -79,7 +79,7 @@ export function PostDraftModal({ open, onOpenChange, article, prompts }: PostDra
       }
       onOpenChange(newOpen);
     },
-    [isGenerating, onOpenChange]
+    [isGenerating, onOpenChange],
   );
 
   const handleGenerate = useCallback(async () => {

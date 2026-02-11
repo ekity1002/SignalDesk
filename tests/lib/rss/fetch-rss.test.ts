@@ -52,12 +52,14 @@ const mockTags: Tag[] = [
   {
     id: "tag-1",
     name: "AI",
+    is_active: true,
     created_at: "2026-01-01T00:00:00Z",
     keywords: [{ id: "kw-1", tag_id: "tag-1", keyword: "machine learning" }],
   },
   {
     id: "tag-2",
     name: "Cloud",
+    is_active: true,
     created_at: "2026-01-01T00:00:00Z",
     keywords: [{ id: "kw-2", tag_id: "tag-2", keyword: "AWS" }],
   },
@@ -208,7 +210,7 @@ describe("fetchRssSource", () => {
 
     // The URL should be properly encoded before being passed to parseURL
     expect(mockParseURL).toHaveBeenCalledWith(
-      "https://news.google.com/rss/search?q=(Nikon%20OR%20%E3%83%8B%E3%82%B3%E3%83%B3)%20when:1d&hl=ja"
+      "https://news.google.com/rss/search?q=(Nikon%20OR%20%E3%83%8B%E3%82%B3%E3%83%B3)%20when:1d&hl=ja",
     );
     expect(result.errors).toEqual([]);
   });

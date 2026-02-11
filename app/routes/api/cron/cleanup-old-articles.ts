@@ -1,7 +1,4 @@
-import {
-  createUnauthorizedResponse,
-  verifyCronAuth,
-} from "~/lib/cron/auth.server";
+import { createUnauthorizedResponse, verifyCronAuth } from "~/lib/cron/auth.server";
 import { deleteOldArticles } from "~/lib/rss/articles.server";
 import { getSettings } from "~/lib/settings/settings.server";
 

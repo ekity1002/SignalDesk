@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { matchTags, type TagWithKeywords } from "~/lib/rss/tag-matcher";
 
-const makeTags = (tags: { id: string; name: string; keywords: string[] }[]): TagWithKeywords[] =>
+const makeTags = (
+  tags: { id: string; name: string; keywords: string[]; is_active?: boolean }[],
+): TagWithKeywords[] =>
   tags.map((t) => ({
     id: t.id,
     name: t.name,
+    is_active: t.is_active ?? true,
     created_at: "2026-01-01T00:00:00Z",
     keywords: t.keywords.map((kw, i) => ({
       id: `${t.id}-kw-${i}`,
@@ -85,5 +88,35 @@ describe("matchTags", () => {
     const result = matchTags("AI and artificial intelligence news", "", tags);
     expect(result).toHaveLength(1);
     expect(result).toEqual([{ id: "1", name: "AI" }]);
+  });
+
+  it("should skip inactive tags", () => {
+    const tags = makeTags([
+      { id: "1", name: "AI", keywords: ["machine learning"], is_active: false },
+    ]);
+    const result = matchTags("Introduction to Machine Learning", "", tags);
+    expect(result).toEqual([]);
+  });
+
+  it("should only match active tags", () => {
+    const tags = makeTags([
+      { id: "1", name: "AI", keywords: ["machine learning"], is_active: false },
+      { id: "2", name: "Cloud", keywords: ["AWS"], is_active: true },
+    ]);
+    const result = matchTags("AWS and Machine Learning", "", tags);
+    expect(result).toHaveLength(1);
+    expect(result).toEqual([{ id: "2", name: "Cloud" }]);
+  });
+
+  it("should match all active tags", () => {
+    const tags = makeTags([
+      { id: "1", name: "AI", keywords: ["machine learning"], is_active: true },
+      { id: "2", name: "Cloud", keywords: ["AWS"], is_active: true },
+      { id: "3", name: "DevOps", keywords: ["CI/CD"], is_active: false },
+    ]);
+    const result = matchTags("AWS machine learning CI/CD pipeline", "", tags);
+    expect(result).toHaveLength(2);
+    expect(result).toContainEqual({ id: "1", name: "AI" });
+    expect(result).toContainEqual({ id: "2", name: "Cloud" });
   });
 });

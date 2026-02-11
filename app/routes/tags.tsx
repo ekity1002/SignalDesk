@@ -7,6 +7,7 @@ import {
   Form as RouterForm,
   redirect,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
   useSubmit,
@@ -23,6 +24,7 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { Switch } from "~/components/ui/switch";
 import { getSession } from "~/lib/auth/session.server";
 import {
   type CreateTagFormData,
@@ -30,7 +32,13 @@ import {
   createTagSchema,
   updateTagKeywordsSchema,
 } from "~/lib/tags/schemas";
-import { createTag, deleteTag, getTags, updateTagKeywords } from "~/lib/tags/tags.server";
+import {
+  createTag,
+  deleteTag,
+  getTags,
+  updateTagActive,
+  updateTagKeywords,
+} from "~/lib/tags/tags.server";
 import type { Route } from "./+types/tags";
 
 export function meta(_args: Route.MetaArgs) {
@@ -119,6 +127,24 @@ export async function action({ request }: Route.ActionArgs) {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to update keywords",
+      };
+    }
+  }
+
+  if (intent === "update-active") {
+    const tagId = formData.get("tagId");
+    const isActive = formData.get("isActive") === "true";
+
+    if (typeof tagId !== "string") {
+      return { success: false, error: "Invalid tag ID" };
+    }
+
+    try {
+      await updateTagActive(tagId, isActive);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update tag status",
       };
     }
   }
@@ -270,82 +296,148 @@ export default function TagsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {tags.map((tag) => (
-              <Card key={tag.id} className="border-sidebar-border bg-card p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="mb-2 font-medium">{tag.name}</h3>
-                    {editingTagId === tag.id ? (
-                      <div className="space-y-2">
-                        <Input
-                          value={editKeywords}
-                          onChange={(e) => setEditKeywords(e.target.value)}
-                          placeholder="keyword1, keyword2"
-                          className="bg-background"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            disabled={isSubmitting}
-                            onClick={() => saveKeywords(tag.id)}
-                            className="bg-sidebar-accent hover:bg-sidebar-accent/90"
-                          >
-                            Save
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={cancelEditing}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {tag.keywords.length > 0 ? (
-                          tag.keywords.map((kw) => (
-                            <Badge key={kw.id} variant="secondary" className="text-xs">
-                              {kw.keyword}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No keywords</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="ml-2 flex gap-1">
-                    {editingTagId !== tag.id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          startEditing(
-                            tag.id,
-                            tag.keywords.map((kw) => kw.keyword),
-                          )
-                        }
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <RouterForm method="post">
-                      <input type="hidden" name="intent" value="delete" />
-                      <input type="hidden" name="id" value={tag.id} />
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isSubmitting}
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </RouterForm>
-                  </div>
-                </div>
-              </Card>
+              <TagCard
+                key={tag.id}
+                tag={tag}
+                isEditing={editingTagId === tag.id}
+                editKeywords={editKeywords}
+                onEditKeywordsChange={setEditKeywords}
+                onStartEditing={() =>
+                  startEditing(
+                    tag.id,
+                    tag.keywords.map((kw) => kw.keyword),
+                  )
+                }
+                onCancelEditing={cancelEditing}
+                onSaveKeywords={() => saveKeywords(tag.id)}
+                isSubmitting={isSubmitting}
+              />
             ))}
           </div>
         )}
       </section>
     </div>
+  );
+}
+
+type TagCardProps = {
+  tag: {
+    id: string;
+    name: string;
+    is_active: boolean;
+    keywords: { id: string; keyword: string }[];
+  };
+  isEditing: boolean;
+  editKeywords: string;
+  onEditKeywordsChange: (value: string) => void;
+  onStartEditing: () => void;
+  onCancelEditing: () => void;
+  onSaveKeywords: () => void;
+  isSubmitting: boolean;
+};
+
+function TagCard({
+  tag,
+  isEditing,
+  editKeywords,
+  onEditKeywordsChange,
+  onStartEditing,
+  onCancelEditing,
+  onSaveKeywords,
+  isSubmitting,
+}: TagCardProps) {
+  const fetcher = useFetcher();
+
+  // Optimistic update: use pending form data if available
+  const isActive =
+    fetcher.formData?.get("intent") === "update-active"
+      ? fetcher.formData.get("isActive") === "true"
+      : tag.is_active;
+
+  return (
+    <Card className={`border-sidebar-border bg-card p-4 ${!isActive ? "opacity-50" : ""}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="mb-2 flex items-center gap-3">
+            <h3 className="font-medium">{tag.name}</h3>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={isActive}
+                disabled={fetcher.state !== "idle"}
+                onCheckedChange={(checked) => {
+                  fetcher.submit(
+                    { tagId: tag.id, isActive: String(checked), intent: "update-active" },
+                    { method: "post" },
+                  );
+                }}
+              />
+              <span className="text-xs text-muted-foreground">
+                {isActive ? "Active" : "Inactive"}
+              </span>
+            </div>
+          </div>
+          {isEditing ? (
+            <div className="space-y-2">
+              <Input
+                value={editKeywords}
+                onChange={(e) => onEditKeywordsChange(e.target.value)}
+                placeholder="keyword1, keyword2"
+                className="bg-background"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={isSubmitting}
+                  onClick={onSaveKeywords}
+                  className="bg-sidebar-accent hover:bg-sidebar-accent/90"
+                >
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={onCancelEditing}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {tag.keywords.length > 0 ? (
+                tag.keywords.map((kw) => (
+                  <Badge key={kw.id} variant="secondary" className="text-xs">
+                    {kw.keyword}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">No keywords</span>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="ml-2 flex gap-1">
+          {!isEditing && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onStartEditing}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          <RouterForm method="post">
+            <input type="hidden" name="intent" value="delete" />
+            <input type="hidden" name="id" value={tag.id} />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              disabled={isSubmitting}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </RouterForm>
+        </div>
+      </div>
+    </Card>
   );
 }
