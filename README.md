@@ -70,8 +70,11 @@ npm run dev
 #### 3. 別ターミナルから `curl` で実行
 
 ```bash
-curl -H "Authorization: Bearer local-test-secret" \
-  http://localhost:5173/api/cron/fetch-rss
+# rss取得
+curl -H "Authorization: Bearer local-test-secret" http://localhost:5173/api/cron/fetch-rss
+
+#古い記事の削除
+curl -H "Authorization: Bearer local-test-secret" http://localhost:5173/api/cron/cleanup-old-articles
 ```
 
 ---
