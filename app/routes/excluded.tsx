@@ -125,7 +125,10 @@ export default function Excluded() {
 
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+          <form
+            onSubmit={handleSearch}
+            className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none"
+          >
             <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input

@@ -5,6 +5,7 @@ import {
   deleteTag,
   getTags,
   type Tag,
+  updateTagActive,
   updateTagKeywords,
 } from "~/lib/tags/tags.server";
 
@@ -28,6 +29,7 @@ describe("Tags Server", () => {
         {
           id: "1",
           name: "AI",
+          is_active: true,
           created_at: "2026-02-04T00:00:00Z",
           keywords: [
             { id: "k1", tag_id: "1", keyword: "machine learning" },
@@ -37,14 +39,16 @@ describe("Tags Server", () => {
         {
           id: "2",
           name: "Cloud",
+          is_active: true,
           created_at: "2026-02-03T00:00:00Z",
           keywords: [{ id: "k3", tag_id: "2", keyword: "AWS" }],
         },
       ];
 
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockOrder = vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: mockTags, error: null }),
       });
+      const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
       vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
 
       const result = await getTags();
@@ -54,9 +58,10 @@ describe("Tags Server", () => {
     });
 
     it("should throw error when fetch fails", async () => {
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockOrder = vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: null, error: { message: "DB Error" } }),
       });
+      const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
       vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as never);
 
       await expect(getTags()).rejects.toThrow("Failed to fetch tags");
@@ -378,6 +383,78 @@ describe("Tags Server", () => {
       await expect(updateTagKeywords("1", ["test"])).rejects.toThrow("Failed to update keywords");
       // insert called twice: first for new keywords (fail), second for restore
       expect(mockInsert).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("updateTagActive", () => {
+    it("should update tag is_active to false", async () => {
+      const tagId = "1";
+      const mockTag = {
+        id: "1",
+        name: "AI",
+        is_active: false,
+        created_at: "2026-02-04T00:00:00Z",
+      };
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: mockTag, error: null }),
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate } as never);
+
+      const result = await updateTagActive(tagId, false);
+
+      expect(supabase.from).toHaveBeenCalledWith("tags");
+      expect(mockUpdate).toHaveBeenCalledWith({ is_active: false });
+      expect(result).toEqual(mockTag);
+    });
+
+    it("should update tag is_active to true", async () => {
+      const tagId = "1";
+      const mockTag = {
+        id: "1",
+        name: "AI",
+        is_active: true,
+        created_at: "2026-02-04T00:00:00Z",
+      };
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: mockTag, error: null }),
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate } as never);
+
+      const result = await updateTagActive(tagId, true);
+
+      expect(mockUpdate).toHaveBeenCalledWith({ is_active: true });
+      expect(result).toEqual(mockTag);
+    });
+
+    it("should throw error when update fails", async () => {
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: "Update error" },
+            }),
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate } as never);
+
+      await expect(updateTagActive("1", false)).rejects.toThrow(
+        "Failed to update tag active status",
+      );
     });
   });
 });

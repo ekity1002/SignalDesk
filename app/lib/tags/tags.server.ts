@@ -9,6 +9,7 @@ export type TagKeyword = {
 export type Tag = {
   id: string;
   name: string;
+  is_active: boolean;
   created_at: string;
   keywords: TagKeyword[];
 };
@@ -22,7 +23,8 @@ export async function getTags(): Promise<Tag[]> {
   const { data, error } = await supabase
     .from("tags")
     .select("*, keywords:tag_keywords(*)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true });
 
   if (error) {
     throw new Error("Failed to fetch tags");
@@ -73,6 +75,31 @@ export async function deleteTag(id: string): Promise<void> {
   if (error) {
     throw new Error("Failed to delete tag");
   }
+}
+
+export type UpdateTagActiveResult = {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export async function updateTagActive(
+  tagId: string,
+  isActive: boolean,
+): Promise<UpdateTagActiveResult> {
+  const { data, error } = await supabase
+    .from("tags")
+    .update({ is_active: isActive })
+    .eq("id", tagId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error("Failed to update tag active status");
+  }
+
+  return data;
 }
 
 export async function updateTagKeywords(tagId: string, keywords: string[]): Promise<TagKeyword[]> {

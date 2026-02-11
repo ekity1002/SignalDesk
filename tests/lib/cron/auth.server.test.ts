@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createUnauthorizedResponse,
-  verifyCronAuth,
-} from "~/lib/cron/auth.server";
+import { createUnauthorizedResponse, verifyCronAuth } from "~/lib/cron/auth.server";
 
 describe("verifyCronAuth", () => {
   const originalEnv = process.env;
